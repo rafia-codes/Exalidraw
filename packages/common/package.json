@@ -2,12 +2,14 @@
   "name": "@repo/common",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/types.js",
+  "types": "dist/types.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b",
+    "dev":"pnpm run build"
   },
   "exports":{
-    "./types":"./src/types.ts"
+    "./types":"./dist/types.js"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"

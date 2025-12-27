@@ -11,14 +11,15 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
-    "@repo/common":"workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@repo/db":"workspace:*",
     "@repo/backend-common": "workspace:*",
+    "@repo/common": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",

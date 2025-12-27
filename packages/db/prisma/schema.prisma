@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -19,14 +18,14 @@ model User {
   password    String
   name        String?
   photo       String?
-  avatar      String
+  avatar      String?
   Rooms       Room[]
   Chat        Chat[]
 }
 
 model Room {
  id         Int           @id @default(autoincrement())
- slug       Int           @unique
+ slug       String        @unique
  createdAt  DateTime      @default(now())
  adminId    String
  admin      User          @relation(fields: [adminId] ,references: [id])

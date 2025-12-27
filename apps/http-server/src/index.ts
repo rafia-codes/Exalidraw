@@ -1,10 +1,12 @@
+import 'dotenv/config';
 import express from "express";
 import bcrypt from "bcrypt";
 import { CreateRoomSchema, SignInSchema, userSchema } from "@repo/common/types";
 import { prismaClient } from "@repo/db/index"
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "./config.js";
+import { JWT_SECRET } from "@repo/backend-common/config";
 import { verifyUser } from "./middleware.js";
+import cors from "cors";
 
 declare global{
   namespace Express{
@@ -14,9 +16,11 @@ declare global{
   }
 }
 
+console.log("DATABASE_URL in HTTP server:", process.env.DATABASE_URL);
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.post("/signup", async (req, res) => {
   const parsedData = userSchema.safeParse(req.body);
@@ -33,8 +37,9 @@ app.post("/signup", async (req, res) => {
     const user = await prismaClient.user.create({data:
       {
         email,
-        username,
-        hashed
+        name:username,
+        password:hashed,
+        avatar:""
       }
     });
     const token = jwt.sign({id:user?.id},JWT_SECRET);
@@ -48,10 +53,10 @@ app.post("/signin",async (req, res) => {
   const parsedData = SignInSchema.safeParse(req.body);
   if(!parsedData.success)
     return res.json({message:"Incorrect credentials"});
-  const { username, password } = parsedData.data;
+  const { email, password } = parsedData.data;
   try {
     const user = await prismaClient.user.findUnique({
-      where:{username}
+      where:{email}
     });
     if(!user)
       return res.json({message:"User not found"});
@@ -75,7 +80,7 @@ app.post("/room",verifyUser,async (req,res) => {
     const roomId = await prismaClient.room.create({
     data:{
       slug: parsedData.data.name,
-      adminId : userId
+      admin: { connect: { id: userId } } 
     }
     });
   return res.json(roomId);
@@ -84,4 +89,31 @@ app.post("/room",verifyUser,async (req,res) => {
   }
 });
 
+app.get('/chats/:roomId',async (req,res)=>{
+  const roomId = Number(req.params.roomId);
+  const messages = await prismaClient.room.findMany({
+    where:{
+      id:roomId,
+    },
+    orderBy:{
+      id:"desc"
+    },
+    take:50
+  })
+  return res.json({messages});
+});
+
+app.get('/room/:slug',async (req,res)=>{
+  const slug = req.params.slug;
+  const messages = await prismaClient.room.findFirst({
+    where:{
+      slug,
+    },
+    orderBy:{
+      id:"desc"
+    },
+    take:50
+  })
+  return res.json({messages});
+})
 app.listen(3000);
