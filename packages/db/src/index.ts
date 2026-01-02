@@ -1,12 +1,17 @@
-// packages/db/index.ts
-import { PrismaClient } from "@prisma/client";
+import dotenv from 'dotenv';
+dotenv.config({ path: '../../.env' });
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 
-let prismaClient: PrismaClient;
+const connectionString = process.env.DATABASE_URL;
 
-export function getPrismaClient() {
-  if (!prismaClient) {
-    console.log("DATABASE_URL inside packages/db:", process.env.DATABASE_URL); // for debugging
-    prismaClient = new PrismaClient(); // no need for url/accelerateUrl
-  }
-  return prismaClient;
+if(!connectionString){
+  throw new Error("DATABASE_URL environment variable is not set");
 }
+
+const pool = new Pool({connectionString});
+const adapter = new PrismaPg(pool);
+const prismaClient = new PrismaClient({ adapter });
+
+export { prismaClient }; 

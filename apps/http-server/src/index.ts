@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from "express";
 import bcrypt from "bcrypt";
 import { CreateRoomSchema, SignInSchema, userSchema } from "@repo/common/types";
-import { prismaClient } from "@repo/db/index"
+import { prismaClient } from "@repo/db";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { verifyUser } from "./middleware.js";
@@ -16,7 +16,6 @@ declare global{
   }
 }
 
-console.log("DATABASE_URL in HTTP server:", process.env.DATABASE_URL);
 const app = express();
 
 app.use(express.json());
