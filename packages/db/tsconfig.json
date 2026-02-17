@@ -1,14 +1,3 @@
 {
-  "extends": "@repo/typescript-config/base.json",
-  "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "composite": true,
-    "incremental": true,
-    "types": ["node"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext"
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "src/generated"]
+    "extends":"@repo/typescript-config/base.json"
 }

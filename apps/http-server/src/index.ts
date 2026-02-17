@@ -1,11 +1,11 @@
 import 'dotenv/config';
 import express from "express";
 import bcrypt from "bcrypt";
-import { CreateRoomSchema, SignInSchema, userSchema } from "@repo/common/types";
-import { prismaClient } from "@repo/db";
-import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { verifyUser } from "./middleware.js";
+import { CreateRoomSchema, SignInSchema, userSchema } from "@repo/common/types";
+import { prismaClient } from "@repo/db/client";
+import jwt from "jsonwebtoken";
 import cors from "cors";
 
 declare global{
@@ -37,14 +37,13 @@ app.post("/signup", async (req, res) => {
       {
         email,
         name:username,
-        password:hashed,
-        avatar:""
+        password:hashed
       }
     });
     const token = jwt.sign({id:user?.id},JWT_SECRET);
     return res.json(token);
   } catch (error) {
-    return res.json({message:"Internal Server Error"});
+    return res.status(500).json({message:"Internal Server Error"});
   }
 });
 
@@ -114,5 +113,9 @@ app.get('/room/:slug',async (req,res)=>{
     take:50
   })
   return res.json({messages});
-})
-app.listen(3000);
+});
+
+
+app.listen(3001,()=>{
+  console.log(`Server started`);
+});

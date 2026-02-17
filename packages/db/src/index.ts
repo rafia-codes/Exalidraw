@@ -1,17 +1,16 @@
-import dotenv from 'dotenv';
-dotenv.config({ path: '../../.env' });
+// lib/prisma.ts
+import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
-import { PrismaClient } from '@prisma/client';
 
-const connectionString = process.env.DATABASE_URL;
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-if(!connectionString){
-  throw new Error("DATABASE_URL environment variable is not set");
-}
+const adapter = new PrismaPg({ 
+  connectionString: process.env.DATABASE_URL 
+});
 
-const pool = new Pool({connectionString});
-const adapter = new PrismaPg(pool);
-const prismaClient = new PrismaClient({ adapter });
+export const prismaClient =
+  globalForPrisma.prisma || new PrismaClient({
+    adapter:adapter
+  });
 
-export { prismaClient }; 
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prismaClient;

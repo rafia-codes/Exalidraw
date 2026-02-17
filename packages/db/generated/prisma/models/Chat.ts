@@ -261,8 +261,8 @@ export type ChatScalarWhereWithAggregatesInput = {
 
 export type ChatCreateInput = {
   message: string
-  room: Prisma.RoomCreateNestedOneWithoutChatInput
-  user: Prisma.UserCreateNestedOneWithoutChatInput
+  room: Prisma.RoomCreateNestedOneWithoutChatsInput
+  user: Prisma.UserCreateNestedOneWithoutChatsInput
 }
 
 export type ChatUncheckedCreateInput = {
@@ -274,8 +274,8 @@ export type ChatUncheckedCreateInput = {
 
 export type ChatUpdateInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
-  room?: Prisma.RoomUpdateOneRequiredWithoutChatNestedInput
-  user?: Prisma.UserUpdateOneRequiredWithoutChatNestedInput
+  room?: Prisma.RoomUpdateOneRequiredWithoutChatsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutChatsNestedInput
 }
 
 export type ChatUncheckedUpdateInput = {
@@ -430,7 +430,7 @@ export type ChatUncheckedUpdateManyWithoutRoomNestedInput = {
 
 export type ChatCreateWithoutUserInput = {
   message: string
-  room: Prisma.RoomCreateNestedOneWithoutChatInput
+  room: Prisma.RoomCreateNestedOneWithoutChatsInput
 }
 
 export type ChatUncheckedCreateWithoutUserInput = {
@@ -477,7 +477,7 @@ export type ChatScalarWhereInput = {
 
 export type ChatCreateWithoutRoomInput = {
   message: string
-  user: Prisma.UserCreateNestedOneWithoutChatInput
+  user: Prisma.UserCreateNestedOneWithoutChatsInput
 }
 
 export type ChatUncheckedCreateWithoutRoomInput = {
@@ -520,7 +520,7 @@ export type ChatCreateManyUserInput = {
 
 export type ChatUpdateWithoutUserInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
-  room?: Prisma.RoomUpdateOneRequiredWithoutChatNestedInput
+  room?: Prisma.RoomUpdateOneRequiredWithoutChatsNestedInput
 }
 
 export type ChatUncheckedUpdateWithoutUserInput = {
@@ -543,7 +543,7 @@ export type ChatCreateManyRoomInput = {
 
 export type ChatUpdateWithoutRoomInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
-  user?: Prisma.UserUpdateOneRequiredWithoutChatNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutChatsNestedInput
 }
 
 export type ChatUncheckedUpdateWithoutRoomInput = {
