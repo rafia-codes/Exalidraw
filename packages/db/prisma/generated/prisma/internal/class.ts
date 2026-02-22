@@ -12,7 +12,7 @@
  */
 
 import * as runtime from "@prisma/client/runtime/client"
-import type * as Prisma from "./prismaNamespace.js"
+import type * as Prisma from "./prismaNamespace"
 
 
 const config: runtime.GetPrismaClientConfig = {
@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.4.0",
   "engineVersion": "ab56fe763f921d033a6c195e7ddeb3e255bdbb57",
   "activeProvider": "postgresql",
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id       String  @id @default(uuid())\n  email    String  @unique\n  password String\n  name     String\n  photo    String?\n  rooms    Room[]\n  chats    Chat[]\n}\n\nmodel Room {\n  id        Int      @id @default(autoincrement())\n  slug      String   @unique\n  createdAt DateTime @default(now())\n  adminId   String\n  admin     User     @relation(fields: [adminId], references: [id])\n  chats     Chat[]\n}\n\nmodel Chat {\n  id      Int    @id @default(autoincrement())\n  roomId  Int\n  message String\n  userId  String\n  room    Room   @relation(fields: [roomId], references: [id])\n  user    User   @relation(fields: [userId], references: [id])\n}\n",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"./generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id       String  @id @default(uuid())\n  email    String  @unique\n  password String\n  name     String\n  photo    String?\n  rooms    Room[]\n  chats    Chat[]\n}\n\nmodel Room {\n  id        Int      @id @default(autoincrement())\n  slug      String   @unique\n  createdAt DateTime @default(now())\n  adminId   String\n  admin     User     @relation(fields: [adminId], references: [id])\n  chats     Chat[]\n}\n\nmodel Chat {\n  id      Int    @id @default(autoincrement())\n  roomId  Int\n  message String\n  userId  String\n  room    Room   @relation(fields: [roomId], references: [id])\n  user    User   @relation(fields: [userId], references: [id])\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},

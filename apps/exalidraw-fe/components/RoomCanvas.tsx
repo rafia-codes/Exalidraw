@@ -10,11 +10,11 @@ export function RoomCanvas({roomId}:{roomId:string}){
         const ws = new WebSocket(WS_URL);
         ws.onopen = () => {
             setSocket(ws);
-        }
-        ws.send(JSON.stringify({
+            ws.send(JSON.stringify({
             type:"join_room",
             roomId
         }));
+        }
     },[]);
 
     if(!socket){
@@ -25,9 +25,5 @@ export function RoomCanvas({roomId}:{roomId:string}){
 
     return <div className="h-screen w-screen">
         <Canvas roomId={roomId} socket={socket}></Canvas>
-        <div className="absolute bottom-0 right-0">
-            <div className="bg-white text-black">Rectangle</div>
-            <div className="bg-white text-black">Circle</div>
-        </div>
     </div>
 }

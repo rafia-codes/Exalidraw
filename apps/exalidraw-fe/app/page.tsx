@@ -1,9 +1,17 @@
-import Image from "next/image";
+import Hero from "@/components/Hero";
+import Features from "@/components/Features";
+import CTA from "@/components/CTA";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      Hello 
+    <div className="min-h-screen bg-background">
+      <Hero />
+      <div id="features">
+        <Features />
+      </div>
+      <CTA />
+      <Footer />
     </div>
   );
 }

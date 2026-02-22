@@ -4,7 +4,7 @@ import { ChatRoom } from "../../components/ChatRoom";
 
 async function getRoom(slug:string){
     const response = await axios.get(`${BACKEND_URL}/room/${slug}`);
-    return response.data.room.id;
+    return response.data.messages.id;
 }
 
 export default async function ChatRoom1({params}:{
@@ -12,7 +12,7 @@ export default async function ChatRoom1({params}:{
         slug:string
     }
 }){
-    const slug=params.slug;
+    const slug=(await params).slug;
     const roomId =await getRoom(slug);
 
     return <ChatRoom id={roomId}></ChatRoom>

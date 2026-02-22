@@ -9,7 +9,7 @@ export function ChatRoomClient({messages,id}:{
 }){
     const { socket,loading } = useSocket();
     const [chats,setChats] = useState(messages);
-    const [currMessage,setCurrMessage] = useState<string>();
+    const [currMessage,setCurrMessage] = useState<string>('');
 
     useEffect(()=>{
         if(socket && !loading){
@@ -29,14 +29,15 @@ export function ChatRoomClient({messages,id}:{
     },[socket,loading]);
 
     return (<div>
-        {chats.map(m => <div>{m.message}</div>)}
-        <input type="text" value={currMessage} onChange={e=>setCurrMessage(e.target.value)}/>
+        {chats.map((m,id)=> <div key={id}>{m.message}</div>)}
+        <input type="text" onChange={e=>setCurrMessage(e.target.value)}/>
         <button onClick={()=>{
             socket?.send(JSON.stringify({
                 type:"chat",
                 roomId:id,
                 message:currMessage
             }))
+            setCurrMessage('');
         }}>
             Send Message
         </button>

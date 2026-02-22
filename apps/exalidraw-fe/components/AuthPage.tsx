@@ -1,6 +1,6 @@
 "use client";
 
-export function AuthPage({isSignIn}:{
+export default function AuthPage({isSignIn}:{
     isSignIn:boolean
 }){
     return <div className="w-screen h-screen flex justify-center items-center">
