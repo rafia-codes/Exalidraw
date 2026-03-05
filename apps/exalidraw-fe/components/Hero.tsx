@@ -1,9 +1,17 @@
+'use client'
 import { Button } from "@/components/Button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "../public/hero.png";
+import { useState } from "react";
+import AuthModal from "./AuthModal";
 
 const Hero = () => {
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authOpen, setAuthOpen] = useState(false);
+
   return (
+    <>
+     <AuthModal mode={authMode} open={authOpen} onOpenChange={setAuthOpen} />
     <section className="relative overflow-hidden pt-20 pb-16 px-6">
       {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -31,8 +39,8 @@ const Hero = () => {
             <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Docs</a>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">Sign in</Button>
-            <Button variant="hero" size="sm" className="bg-orange-600/80 text-white">Get Started</Button>
+            <Button variant="ghost" size="sm" onClick={()=>(setAuthMode('signin'),setAuthOpen(true))}>Sign in</Button>
+            <Button variant="hero" size="sm" className="bg-orange-600/80 text-white" onClick={()=>(setAuthMode('signup'),setAuthOpen(true))}>Get Started</Button>
           </div>
         </nav>
 
@@ -82,6 +90,7 @@ const Hero = () => {
         </div>
       </div>
     </section>
+    </>
   );
 };
 

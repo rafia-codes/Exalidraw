@@ -13,15 +13,14 @@ interface User {
 
 let users: User[] = [];
 
-function gettokenfromCookie(cookie?:string){
-  if(!cookie)return null;
+function gettokenfromCookie(cookie?: string) {
+  if (!cookie) return null;
 
-  let cookies = cookie.split(';');
+  let cookies = cookie.split(";");
 
-  for(let cooki of cookies){
-    let [key,value] = cooki.trim().split('=');
-    if(key === 'token')
-      return value;
+  for (let cooki of cookies) {
+    let [key, value] = cooki.trim().split("=");
+    if (key === "token") return value;
   }
   return null;
 }
@@ -44,13 +43,12 @@ wss.on("listening", () => {
 });
 
 wss.on("connection", function connection(ws, request) {
-    ws.send("hello");
   // const url = request.url;
   // if (!url) return;
   // const queryParams = new URLSearchParams(url.split("?")[1]);
   // const token = queryParams.get("token") || "";
   const token = gettokenfromCookie(request.headers.cookie);
-  if(token == null){
+  if (token == null) {
     ws.close();
     return;
   }
@@ -64,11 +62,10 @@ wss.on("connection", function connection(ws, request) {
   users.push({
     ws: ws,
     rooms: [],
-    userId: user
+    userId: user,
   });
 
   ws.on("message", async function message(data) {
-
     let parsedData;
     if (typeof data !== "string") {
       parsedData = JSON.parse(data.toString());
@@ -79,7 +76,7 @@ wss.on("connection", function connection(ws, request) {
 
     if (parsedData.type === "join_room") {
       const user = users.find((x) => x.ws == ws);
-      if(!user?.rooms.includes(parsedData.roomId)){
+      if (!user?.rooms.includes(parsedData.roomId)) {
         user?.rooms.push(parsedData.roomId);
       }
     }
@@ -104,7 +101,7 @@ wss.on("connection", function connection(ws, request) {
 
       users.forEach((user) => {
         if (user.rooms.includes(room)) {
-            console.log(user.userId," ",user.rooms);
+          console.log(user.userId, " ", user.rooms);
           user.ws.send(
             JSON.stringify({
               type: "chat",

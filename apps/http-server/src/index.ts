@@ -11,6 +11,7 @@ import {
 import { prismaClient } from "@repo/db/client";
 import jwt from "jsonwebtoken";
 import cors from "cors";
+import cookieParser from 'cookie-parser';
 
 declare global {
   namespace Express {
@@ -23,7 +24,11 @@ declare global {
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   const parsedData = userSchema.safeParse(req.body);
@@ -51,6 +56,7 @@ app.post("/signup", async (req, res) => {
       maxAge: 3 * 24 * 60 * 60 * 1000,
       httpOnly: true
     });
+    console.log('yha cookie',res.cookie);
     return res.json({message: 'Registered successfully'});
   } catch (error) {
     console.log(error);
@@ -61,15 +67,15 @@ app.post("/signup", async (req, res) => {
 app.post("/signin", async (req, res) => {
   const parsedData = SignInSchema.safeParse(req.body);
   if (!parsedData.success)
-    return res.json({ message: "Incorrect credentials" });
+    return res.status(404).json({ message: "Incorrect credentials" });
   const { email, password } = parsedData.data;
   try {
     const user = await prismaClient.user.findUnique({
       where: { email },
     });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "User not found. Please signup first." });
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.json({ message: "Wrong Credentials" });
+    if (!match) return res.status(404).json({ message: "Wrong Credentials" });
     const token = jwt.sign({ id: user?.id }, JWT_SECRET);
     res.cookie('token',token,{
       maxAge: 3 * 24 * 60 * 60 * 1000,
@@ -81,39 +87,73 @@ app.post("/signin", async (req, res) => {
   }
 });
 
-app.post("/room", verifyUser, async (req, res) => {
+app.post('/logout', async (req,res) => {
+  try {
+    res.clearCookie('token');
+    return res.json({message:'Logged Out successfully.'})
+  } catch (error) {
+    return res.status(500).json({ message: "bug in /logout endpt" });
+  }
+})
+
+app.get('/room',verifyUser, async (req,res) => {//to get the rooms
+  console.log('getting rooms');
+  try {
+    console.log('101');
+    const userId = req.userId;
+    const rooms = await prismaClient.room.findMany({
+      where:{
+        adminId:userId
+      }
+    });
+    console.log(rooms);
+    console.log('108');
+    return res.json({rooms});
+  } catch (error) {
+    return res.status(500).json({ message: "bug in /room get endpt" });
+  }
+});
+
+app.post("/room", verifyUser, async (req, res) => {//to create a room
+   try {
+  console.log('room hit');
   const parsedData = RoomSchema.safeParse(req.body);
   if (!parsedData.success)
-    return res.json({ message: "Incorrect credentials" });
-  try {
+    return res.status(400).json({ message: "Incorrect credentials" });
     const userId = req.userId;
-    const roomId = await prismaClient.room.create({
+    console.log(userId);
+    const room = await prismaClient.room.create({
       data: {
         slug: parsedData.data.name,
         admin: { connect: { id: userId } },
       },
     });
-    return res.json(roomId);
+    console.log('created');
+    return res.json({room,message:'Room created Successfully.'});
   } catch (error) {
-    return res.status(500).json({ message: "bug in /room endpt" });
+    return res.status(500).json({ message: "bug in /room post endpt" });
   }
 });
 
-app.get("/chats/:roomId", async (req, res) => {
+app.get("/chats/:roomId", async (req, res) => {//to get messages
+  console.log('getting chats');
   const roomId = Number(req.params.roomId);
-  const messages = await prismaClient.room.findMany({
-    where: {
-      id: roomId,
+  const messages = await prismaClient.chat.findMany({
+    where:{
+      roomId
     },
-    orderBy: {
-      id: "desc",
-    },
-    take: 50,
+    orderBy:{
+      id:"desc"
+    }
   });
-  return res.json({ messages });
+  const shapes = messages.map((message:any)=>{
+    return (JSON.parse(message.message)).shape;
+  })
+  console.log(shapes);
+  return res.json({ shapes });
 });
 
-app.get("/room/:slug", async (req, res) => { //returning room/id
+app.get("/room/:slug", async (req, res) => { //returning roomId
   const slug = req.params.slug;
   const room = await prismaClient.room.findFirst({
     where: {
