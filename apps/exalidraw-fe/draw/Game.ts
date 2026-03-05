@@ -107,6 +107,7 @@ export class Game {
         this.ctx.beginPath();
         this.ctx.moveTo(shape.sX,shape.sY);
         this.ctx.lineTo(shape.eX,shape.eY);
+        this.ctx.stroke();
         this.ctx.closePath();
       } else if (shape.type == "pencil") {
       } else {
@@ -278,6 +279,7 @@ export class Game {
         this.ctx.moveTo(this.startX,this.startY);
         this.ctx.lineTo(endX,endY);
         this.ctx.stroke();
+        this.ctx.closePath();
       } else if (this.selectedTool == "pencil") {
       } else {
       }
