@@ -36,7 +36,7 @@ export function Canvas({roomId,socket}:{roomId:string,socket:WebSocket}){
       handleresize();
       window.addEventListener('resize',handleresize);
       return ()=>window.removeEventListener('resize',handleresize);
-    },[game]);
+    },[]);
 
     return <div style={{
         height: '100vh',
@@ -66,6 +66,7 @@ function Topbar({
   return (
     <div
       style={{
+        cursor:"pointer",
         position: "fixed",
         top: 20,
         left: "50%",

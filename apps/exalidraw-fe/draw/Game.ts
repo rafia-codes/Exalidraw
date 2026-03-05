@@ -18,12 +18,22 @@ type Shape =
     }
   | {
       type: "diamond";
-    }
-  | {
-      type: "pencil";
+      centerX: number;
+      centerY: number;
+      width: number;
+      height: number;
+      top: number;
+      left: number
     }
   | {
       type: "line";
+      sX: number,
+      sY : number,
+      eX : number,
+      eY : number
+    }
+  | {
+      type: "pencil";
     }
   | {
       type: "hand";
@@ -81,7 +91,23 @@ export class Game {
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (shape.type == "diamond") {
+        const topPoint = { x: shape.centerX, y: shape.top };
+        const rightPoint = { x: shape.left + shape.width, y: shape.centerY };
+        const bottomPoint = { x: shape.centerX, y: shape.top + shape.height };
+        const leftPoint = { x: shape.left, y: shape.centerY };
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(topPoint.x, topPoint.y);
+        this.ctx.lineTo(rightPoint.x, rightPoint.y);
+        this.ctx.lineTo(bottomPoint.x, bottomPoint.y);
+        this.ctx.lineTo(leftPoint.x, leftPoint.y);
+        this.ctx.closePath();
+        this.ctx.stroke();
       } else if (shape.type == "line") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(shape.sX,shape.sY);
+        this.ctx.lineTo(shape.eX,shape.eY);
+        this.ctx.closePath();
       } else if (shape.type == "pencil") {
       } else {
       }
@@ -123,6 +149,7 @@ export class Game {
 
   mouseDownHandler = (e) => {
     console.log(109, this.selectedTool);
+    this.canvas.style.cursor = 'crosshair';
     this.clicked = true;
     this.startX = e.clientX;
     this.startY = e.clientY;
@@ -130,9 +157,23 @@ export class Game {
 
   mouseUpHandler = (e) => {
     //changes required
+    this.canvas.style.cursor = 'default';
     this.clicked = false;
-    const width = e.clientX - this.startX;
-    const height = e.clientY - this.startY;
+
+    const endX = e.clientX;
+    const endY = e.clientY;
+
+    const width = endX - this.startX;
+    const height = endY - this.startY;
+
+    const left = Math.min(this.startX, e.clientX);
+    const top = Math.min(this.startY, e.clientY);
+
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+
+    const radX = Math.abs(width) / 2;
+    const radY = Math.abs(height) / 2;
 
     const selectedTool = this.selectedTool;
     let shape: Shape | null = null;
@@ -145,8 +186,6 @@ export class Game {
         height: e.clientY - this.startY,
       };
     } else if (selectedTool == "ellipse") {
-      const radX = Math.abs(width) / 2;
-      const radY = Math.abs(height) / 2;
       shape = {
         type: "ellipse",
         radX,
@@ -155,7 +194,23 @@ export class Game {
         centerY: this.startY + height / 2,
       };
     } else if (this.selectedTool == "diamond") {
+      shape = {
+        type: 'diamond',
+        centerX: centerX,
+        centerY,
+        top,
+        left,
+        width,
+        height
+      }
     } else if (this.selectedTool == "line") {
+      shape = {
+        type: "line",
+        sX: this.startX,
+        sY: this.startY,
+        eX: endX,
+        eY: endY
+      }
     } else if (this.selectedTool == "pencil") {
     } else {
     }
@@ -179,11 +234,17 @@ export class Game {
   mouseMoveHandler = (e) => {
     //changes required
     if (this.clicked) {
-      const width = e.clientX - this.startX;
-      const height = e.clientY - this.startY;
+      const endX = e.clientX;
+      const endY = e.clientY;
 
-      const centerX = this.startX + width / 2;
-      const centerY = this.startY + height / 2;
+      const width = endX - this.startX;
+      const height = endY - this.startY;
+
+      const left = Math.min(this.startX, e.clientX);
+      const top = Math.min(this.startY, e.clientY);
+
+      const centerX = left + width / 2;
+      const centerY = top + height / 2;
 
       const radX = Math.abs(width) / 2;
       const radY = Math.abs(height) / 2;
@@ -196,19 +257,27 @@ export class Game {
         this.ctx.strokeRect(this.startX, this.startY, width, height);
       } else if (this.selectedTool == "ellipse") {
         this.ctx.beginPath();
-        this.ctx.ellipse(
-          centerX,
-          centerY,
-          radX,
-          radY,
-          0,
-          0,
-          2 * Math.PI,
-        );
+        this.ctx.ellipse(centerX, centerY, radX, radY, 0, 0, 2 * Math.PI);
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (this.selectedTool == "diamond") {
+        const topPoint = { x: centerX, y: top };
+        const rightPoint = { x: left + width, y: centerY };
+        const bottomPoint = { x: centerX, y: top + height };
+        const leftPoint = { x: left, y: centerY };
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(topPoint.x, topPoint.y);
+        this.ctx.lineTo(rightPoint.x, rightPoint.y);
+        this.ctx.lineTo(bottomPoint.x, bottomPoint.y);
+        this.ctx.lineTo(leftPoint.x, leftPoint.y);
+        this.ctx.closePath();
+        this.ctx.stroke();
       } else if (this.selectedTool == "line") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.startX,this.startY);
+        this.ctx.lineTo(endX,endY);
+        this.ctx.stroke();
       } else if (this.selectedTool == "pencil") {
       } else {
       }
