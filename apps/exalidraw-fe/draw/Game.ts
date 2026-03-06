@@ -1,6 +1,11 @@
 import getExistingShapes from "./http";
 import { Tool } from "../components/Canvas";
 
+type Points = {
+  x: number,
+  y:number
+}
+
 type Shape =
   | {
       type: "rect";
@@ -34,6 +39,7 @@ type Shape =
     }
   | {
       type: "pencil";
+      points : Array<Points>
     }
   | {
       type: "hand";
@@ -49,10 +55,13 @@ export class Game {
   private startY = 0;
   private clicked: boolean;
   private selectedTool: Tool = "rect";
+  private points: Points[] = [];
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
     this.roomId = roomId;
     this.existingShapes = [];
     this.socket = socket;
@@ -60,6 +69,15 @@ export class Game {
     this.init();
     this.initHandlers();
     this.initMouseHandlers();
+    this.points = [];
+  }
+
+  getMousePos(e:MouseEvent){
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    }
   }
 
   setSelectedTool(tool: Tool) {
@@ -73,7 +91,7 @@ export class Game {
     this.ctx.fillStyle = "rgb(0,0,0)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.existingShapes?.map((shape: Shape) => {
+    this.existingShapes?.forEach((shape: Shape) => {
       if (shape.type == "rect") {
         this.ctx.strokeStyle = "rgb(255,255,255)";
         this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
@@ -110,6 +128,13 @@ export class Game {
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (shape.type == "pencil") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(shape.points[0].x,shape.points[0].y);
+        for(let point of shape.points){
+          this.ctx.lineTo(point.x,point.y);
+        }
+        this.ctx.stroke();
+        this.ctx.closePath();
       } else {
       }
     });
@@ -150,25 +175,32 @@ export class Game {
 
   mouseDownHandler = (e) => {
     console.log(109, this.selectedTool);
+    const {x,y} = this.getMousePos(e);
+
     this.canvas.style.cursor = 'crosshair';
+    this.points = [];  
     this.clicked = true;
-    this.startX = e.clientX;
-    this.startY = e.clientY;
+
+    this.startX = x;
+    this.startY = y;
+
+    this.points.push({x,y});
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(x,y);
   };
 
   mouseUpHandler = (e) => {
     //changes required
     this.canvas.style.cursor = 'default';
+    const {x:endX,y:endY} = this.getMousePos(e);
     this.clicked = false;
-
-    const endX = e.clientX;
-    const endY = e.clientY;
 
     const width = endX - this.startX;
     const height = endY - this.startY;
 
-    const left = Math.min(this.startX, e.clientX);
-    const top = Math.min(this.startY, e.clientY);
+    const left = Math.min(this.startX, endX);
+    const top = Math.min(this.startY, endY);
 
     const centerX = left + width / 2;
     const centerY = top + height / 2;
@@ -213,6 +245,10 @@ export class Game {
         eY: endY
       }
     } else if (this.selectedTool == "pencil") {
+      shape = {
+        type : 'pencil',
+        points: this.points
+      }
     } else {
     }
 
@@ -230,19 +266,22 @@ export class Game {
         roomId: this.roomId,
       }),
     );
+    if(this.selectedTool == 'pencil')
+      this.clearCanvas();
+    this.points = [];
+    this.ctx.closePath();
   };
 
   mouseMoveHandler = (e) => {
     //changes required
     if (this.clicked) {
-      const endX = e.clientX;
-      const endY = e.clientY;
+      const {x:endX,y:endY} = this.getMousePos(e);
 
       const width = endX - this.startX;
       const height = endY - this.startY;
 
-      const left = Math.min(this.startX, e.clientX);
-      const top = Math.min(this.startY, e.clientY);
+      const left = Math.min(this.startX, endX);
+      const top = Math.min(this.startY, endY);
 
       const centerX = left + width / 2;
       const centerY = top + height / 2;
@@ -250,6 +289,7 @@ export class Game {
       const radX = Math.abs(width) / 2;
       const radY = Math.abs(height) / 2;
 
+      if(this.selectedTool !== 'pencil')
       this.clearCanvas();
 
       this.ctx.strokeStyle = "rgb(255,255,255)";
@@ -267,7 +307,6 @@ export class Game {
         const bottomPoint = { x: centerX, y: top + height };
         const leftPoint = { x: left, y: centerY };
 
-        this.ctx.beginPath();
         this.ctx.moveTo(topPoint.x, topPoint.y);
         this.ctx.lineTo(rightPoint.x, rightPoint.y);
         this.ctx.lineTo(bottomPoint.x, bottomPoint.y);
@@ -275,12 +314,14 @@ export class Game {
         this.ctx.closePath();
         this.ctx.stroke();
       } else if (this.selectedTool == "line") {
-        this.ctx.beginPath();
         this.ctx.moveTo(this.startX,this.startY);
         this.ctx.lineTo(endX,endY);
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (this.selectedTool == "pencil") {
+        this.ctx.lineTo(endX,endY);
+        this.ctx.stroke();
+        this.points.push({x:endX,y:endY});
       } else {
       }
     }
