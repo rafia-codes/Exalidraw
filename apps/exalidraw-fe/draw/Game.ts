@@ -56,6 +56,11 @@ export class Game {
   private clicked: boolean;
   private selectedTool: Tool = "rect";
   private points: Points[] = [];
+  private isPanning = false;
+  private panX = 0;
+  private panY = 0;
+  private offsetX = 0;
+  private offsetY = 0;
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
@@ -72,7 +77,7 @@ export class Game {
     this.points = [];
   }
 
-  getMousePos(e:MouseEvent){
+  getMousePos(e: MouseEvent) {
     const rect = this.canvas.getBoundingClientRect();
     return {
       x: e.clientX - rect.left,
@@ -82,78 +87,82 @@ export class Game {
 
   setSelectedTool(tool: Tool) {
     this.selectedTool = tool;
-    console.log(this.selectedTool);
+      this.canvas.style.cursor = tool == 'hand' ?"grab" : 'default';
   }
 
   clearCanvas() {
-    //changes needed  //shapes will be persistent
+    //changes required
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillStyle = "rgb(0,0,0)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.existingShapes?.forEach((shape: Shape) => {
-      if (shape.type == "rect") {
-        this.ctx.strokeStyle = "rgb(255,255,255)";
-        this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-      } else if (shape.type == "ellipse") {
+    this.existingShapes.forEach((shape) => {
+      this.ctx.strokeStyle = "white";
+
+      if (shape.type === "rect") {
+        this.ctx.strokeRect(
+          shape.x + this.offsetX,
+          shape.y + this.offsetY,
+          shape.width,
+          shape.height,
+        );
+      } else if (shape.type === "ellipse") {
         this.ctx.beginPath();
         this.ctx.ellipse(
-          shape.centerX,
-          shape.centerY,
+          shape.centerX + this.offsetX,
+          shape.centerY + this.offsetY,
           shape.radX,
           shape.radY,
           0,
           0,
-          2 * Math.PI,
+          Math.PI * 2,
         );
         this.ctx.stroke();
-        this.ctx.closePath();
-      } else if (shape.type == "diamond") {
+      } else if (shape.type === "diamond") {
         const topPoint = { x: shape.centerX, y: shape.top };
         const rightPoint = { x: shape.left + shape.width, y: shape.centerY };
         const bottomPoint = { x: shape.centerX, y: shape.top + shape.height };
         const leftPoint = { x: shape.left, y: shape.centerY };
 
         this.ctx.beginPath();
-        this.ctx.moveTo(topPoint.x, topPoint.y);
-        this.ctx.lineTo(rightPoint.x, rightPoint.y);
-        this.ctx.lineTo(bottomPoint.x, bottomPoint.y);
-        this.ctx.lineTo(leftPoint.x, leftPoint.y);
+        this.ctx.moveTo(topPoint.x + this.offsetX, topPoint.y + this.offsetY);
+        this.ctx.lineTo(rightPoint.x + this.offsetX,rightPoint.y + this.offsetY,);
+        this.ctx.lineTo(bottomPoint.x + this.offsetX,bottomPoint.y + this.offsetY,);
+        this.ctx.lineTo(leftPoint.x + this.offsetX, leftPoint.y + this.offsetY);
         this.ctx.closePath();
         this.ctx.stroke();
       } else if (shape.type == "line") {
         this.ctx.beginPath();
-        this.ctx.moveTo(shape.sX,shape.sY);
-        this.ctx.lineTo(shape.eX,shape.eY);
+        this.ctx.moveTo(shape.sX + this.offsetX, shape.sY + this.offsetY);
+        this.ctx.lineTo(shape.eX + this.offsetX, shape.eY + this.offsetY);
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (shape.type == "pencil") {
         this.ctx.beginPath();
-        this.ctx.moveTo(shape.points[0].x,shape.points[0].y);
-        for(let point of shape.points){
-          this.ctx.lineTo(point.x,point.y);
+        if (!shape.points || shape.points.length === 0) return;
+        this.ctx.moveTo(
+          shape.points[0].x + this.offsetX,
+          shape.points[0].y + this.offsetY,
+        );
+
+        for (let p of shape.points) {
+          this.ctx.lineTo(p.x + this.offsetX, p.y + this.offsetY);
         }
         this.ctx.stroke();
-        this.ctx.closePath();
-      } else {
       }
     });
   }
 
   async init() {
-    if (!this.ctx) return;
     this.existingShapes = await getExistingShapes(this.roomId);
-    //console.log(this.existingShapes,'existing shapes');
     this.clearCanvas();
-    //console.log('drawn');
   }
 
   initHandlers() {
     this.socket.onmessage = (e) => {
-      console.log("initHandlers", e);
       const message = JSON.parse(e.data);
 
-      if (message.type == "chat") {
+      if (message.type === "chat") {
         const parsedShape = JSON.parse(message.message);
         this.existingShapes.push(parsedShape.shape);
         this.clearCanvas();
@@ -173,27 +182,36 @@ export class Game {
     this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
   }
 
-  mouseDownHandler = (e) => {
-    console.log(109, this.selectedTool);
-    const {x,y} = this.getMousePos(e);
+  mouseDownHandler = (e: MouseEvent) => {
+    if (this.selectedTool === "hand") {
+      this.isPanning = true;
+      this.canvas.style.cursor = "grabbing";
 
-    this.canvas.style.cursor = 'crosshair';
-    this.points = [];  
+      this.panX = e.clientX;
+      this.panY = e.clientY;
+      return;
+    }
+
+    const { x, y } = this.getMousePos(e);
+
     this.clicked = true;
-
     this.startX = x;
     this.startY = y;
 
-    this.points.push({x,y});
+    this.points = [{ x, y }];
 
     this.ctx.beginPath();
-    this.ctx.moveTo(x,y);
+    this.ctx.moveTo(x, y);
   };
 
-  mouseUpHandler = (e) => {
-    //changes required
-    this.canvas.style.cursor = 'default';
-    const {x:endX,y:endY} = this.getMousePos(e);
+  mouseUpHandler = (e: MouseEvent) => {
+    if (this.isPanning) {
+      this.isPanning = false;
+      this.canvas.style.cursor = "grab";
+      return;
+    }
+    
+    const { x: endX, y: endY } = this.getMousePos(e);
     this.clicked = false;
 
     const width = endX - this.startX;
@@ -208,122 +226,134 @@ export class Game {
     const radX = Math.abs(width) / 2;
     const radY = Math.abs(height) / 2;
 
-    const selectedTool = this.selectedTool;
     let shape: Shape | null = null;
-    if (selectedTool == "rect") {
+
+    if (this.selectedTool === "rect") {
       shape = {
         type: "rect",
-        x: this.startX,
-        y: this.startY,
-        width: e.clientX - this.startX,
-        height: e.clientY - this.startY,
+        x: this.startX - this.offsetX,
+        y: this.startY - this.offsetY,
+        width,
+        height,
       };
-    } else if (selectedTool == "ellipse") {
+    } else if (this.selectedTool === "ellipse") {
       shape = {
         type: "ellipse",
+        centerX: centerX - this.offsetX,
+        centerY: centerY - this.offsetY,
         radX,
         radY,
-        centerX: this.startX + width / 2,
-        centerY: this.startY + height / 2,
       };
-    } else if (this.selectedTool == "diamond") {
+    } else if (this.selectedTool === "diamond") {
       shape = {
-        type: 'diamond',
-        centerX: centerX,
-        centerY,
-        top,
-        left,
+        type: "diamond",
+        centerX: centerX - this.offsetX,
+        centerY: centerY - this.offsetY,
+        top: top - this.offsetY,
+        left: left - this.offsetX,
         width,
-        height
-      }
-    } else if (this.selectedTool == "line") {
+        height,
+      };
+    } else if (this.selectedTool === "line") {
       shape = {
         type: "line",
-        sX: this.startX,
-        sY: this.startY,
-        eX: endX,
-        eY: endY
-      }
-    } else if (this.selectedTool == "pencil") {
+        sX: this.startX - this.offsetX,
+        sY: this.startY - this.offsetY,
+        eX: endX - this.offsetX,
+        eY: endY - this.offsetY,
+      };
+    } else if (this.selectedTool === "pencil") {
+      const worldPoints = this.points.map((p) => ({
+        x: p.x - this.offsetX,
+        y: p.y - this.offsetY,
+      }));
+
       shape = {
-        type : 'pencil',
-        points: this.points
-      }
-    } else {
+        type: "pencil",
+        points: worldPoints,
+      };
     }
 
     if (!shape) return;
 
-    console.log(149, shape);
     this.existingShapes.push(shape);
-    console.log("pushed");
+
     this.socket.send(
       JSON.stringify({
         type: "chat",
-        message: JSON.stringify({
-          shape,
-        }),
+        message: JSON.stringify({ shape }),
         roomId: this.roomId,
       }),
     );
-    if(this.selectedTool == 'pencil')
-      this.clearCanvas();
+
     this.points = [];
-    this.ctx.closePath();
+
+    this.clearCanvas();
   };
 
-  mouseMoveHandler = (e) => {
-    //changes required
-    if (this.clicked) {
-      const {x:endX,y:endY} = this.getMousePos(e);
+  mouseMoveHandler = (e: MouseEvent) => {
+    if (this.isPanning) {
+      const dx = e.clientX - this.panX;
+      const dy = e.clientY - this.panY;
 
-      const width = endX - this.startX;
-      const height = endY - this.startY;
+      this.offsetX += dx;
+      this.offsetY += dy;
 
-      const left = Math.min(this.startX, endX);
-      const top = Math.min(this.startY, endY);
+      this.panX = e.clientX;
+      this.panY = e.clientY;
 
-      const centerX = left + width / 2;
-      const centerY = top + height / 2;
-
-      const radX = Math.abs(width) / 2;
-      const radY = Math.abs(height) / 2;
-
-      if(this.selectedTool !== 'pencil')
       this.clearCanvas();
+      return;
+    }
 
-      this.ctx.strokeStyle = "rgb(255,255,255)";
+    if (!this.clicked) return;
 
-      if (this.selectedTool == "rect") {
-        this.ctx.strokeRect(this.startX, this.startY, width, height);
-      } else if (this.selectedTool == "ellipse") {
-        this.ctx.beginPath();
-        this.ctx.ellipse(centerX, centerY, radX, radY, 0, 0, 2 * Math.PI);
-        this.ctx.stroke();
-        this.ctx.closePath();
-      } else if (this.selectedTool == "diamond") {
-        const topPoint = { x: centerX, y: top };
-        const rightPoint = { x: left + width, y: centerY };
-        const bottomPoint = { x: centerX, y: top + height };
-        const leftPoint = { x: left, y: centerY };
+    const { x: endX, y: endY } = this.getMousePos(e);
 
-        this.ctx.moveTo(topPoint.x, topPoint.y);
-        this.ctx.lineTo(rightPoint.x, rightPoint.y);
-        this.ctx.lineTo(bottomPoint.x, bottomPoint.y);
-        this.ctx.lineTo(leftPoint.x, leftPoint.y);
-        this.ctx.closePath();
-        this.ctx.stroke();
-      } else if (this.selectedTool == "line") {
-        this.ctx.moveTo(this.startX,this.startY);
-        this.ctx.lineTo(endX,endY);
-        this.ctx.stroke();
-        this.ctx.closePath();
-      } else if (this.selectedTool == "pencil") {
-        this.ctx.lineTo(endX,endY);
-        this.ctx.stroke();
-        this.points.push({x:endX,y:endY});
-      } else {
-      }
+    const width = endX - this.startX;
+    const height = endY - this.startY;
+
+    const left = Math.min(this.startX, endX);
+    const top = Math.min(this.startY, endY);
+
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+
+    const radX = Math.abs(width) / 2;
+    const radY = Math.abs(height) / 2;
+
+    if (this.selectedTool !== "pencil") this.clearCanvas();
+
+    this.ctx.strokeStyle = "white";
+
+    if (this.selectedTool === "rect") {
+      this.ctx.strokeRect(this.startX, this.startY, width, height);
+    } else if (this.selectedTool === "ellipse") {
+      this.ctx.beginPath();
+      this.ctx.ellipse(centerX, centerY, radX, radY, 0, 0, Math.PI * 2);
+      this.ctx.stroke();
+    } else if (this.selectedTool === "diamond") {
+      const topPoint = { x: centerX, y: top };
+      const rightPoint = { x: left + width, y: centerY };
+      const bottomPoint = { x: centerX, y: top + height };
+      const leftPoint = { x: left, y: centerY };
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(topPoint.x, topPoint.y);
+      this.ctx.lineTo(rightPoint.x, rightPoint.y);
+      this.ctx.lineTo(bottomPoint.x, bottomPoint.y);
+      this.ctx.lineTo(leftPoint.x, leftPoint.y);
+      this.ctx.closePath();
+      this.ctx.stroke();
+    } else if (this.selectedTool === "line") {
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.startX, this.startY);
+      this.ctx.lineTo(endX, endY);
+      this.ctx.stroke();
+    } else if (this.selectedTool === "pencil") {
+      this.ctx.lineTo(endX, endY);
+      this.ctx.stroke();
+      this.points.push({ x: endX, y: endY });
     }
   };
 }
