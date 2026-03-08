@@ -2,9 +2,9 @@ import getExistingShapes from "./http";
 import { Tool } from "../components/Canvas";
 
 type Points = {
-  x: number,
-  y:number
-}
+  x: number;
+  y: number;
+};
 
 type Shape =
   | {
@@ -28,18 +28,18 @@ type Shape =
       width: number;
       height: number;
       top: number;
-      left: number
+      left: number;
     }
   | {
       type: "line";
-      sX: number,
-      sY : number,
-      eX : number,
-      eY : number
+      sX: number;
+      sY: number;
+      eX: number;
+      eY: number;
     }
   | {
       type: "pencil";
-      points : Array<Points>
+      points: Array<Points>;
     }
   | {
       type: "hand";
@@ -65,8 +65,8 @@ export class Game {
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
+    this.ctx.lineCap = "round";
+    this.ctx.lineJoin = "round";
     this.roomId = roomId;
     this.existingShapes = [];
     this.socket = socket;
@@ -81,13 +81,39 @@ export class Game {
     const rect = this.canvas.getBoundingClientRect();
     return {
       x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    }
+      y: e.clientY - rect.top,
+    };
   }
 
   setSelectedTool(tool: Tool) {
     this.selectedTool = tool;
-      this.canvas.style.cursor = tool == 'hand' ?"grab" : 'default';
+    this.canvas.style.cursor = tool == "hand" ? "grab" : "default";
+  }
+
+  drawGrid() {
+    const gridSize = 20;
+
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    const sX = this.offsetX % gridSize;
+    const sY = this.offsetY % gridSize;
+
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = "#1f1f1f";
+    this.ctx.lineWidth = 1;
+
+    for (let x = sX; x < w; x += gridSize) {
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, h);
+    }
+
+    for (let y = sY; y < h; y += gridSize) {
+      this.ctx.moveTo(0, y);
+      this.ctx.lineTo(w, y);
+    }
+
+    this.ctx.stroke();
   }
 
   clearCanvas() {
@@ -96,9 +122,11 @@ export class Game {
     this.ctx.fillStyle = "rgb(0,0,0)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.existingShapes.forEach((shape) => {
-      this.ctx.strokeStyle = "white";
+    this.drawGrid();
 
+    this.ctx.strokeStyle = "white";
+
+    this.existingShapes.forEach((shape) => {
       if (shape.type === "rect") {
         this.ctx.strokeRect(
           shape.x + this.offsetX,
@@ -126,8 +154,14 @@ export class Game {
 
         this.ctx.beginPath();
         this.ctx.moveTo(topPoint.x + this.offsetX, topPoint.y + this.offsetY);
-        this.ctx.lineTo(rightPoint.x + this.offsetX,rightPoint.y + this.offsetY,);
-        this.ctx.lineTo(bottomPoint.x + this.offsetX,bottomPoint.y + this.offsetY,);
+        this.ctx.lineTo(
+          rightPoint.x + this.offsetX,
+          rightPoint.y + this.offsetY,
+        );
+        this.ctx.lineTo(
+          bottomPoint.x + this.offsetX,
+          bottomPoint.y + this.offsetY,
+        );
         this.ctx.lineTo(leftPoint.x + this.offsetX, leftPoint.y + this.offsetY);
         this.ctx.closePath();
         this.ctx.stroke();
@@ -210,12 +244,12 @@ export class Game {
       this.canvas.style.cursor = "grab";
       return;
     }
-    
+
     const { x: endX, y: endY } = this.getMousePos(e);
     this.clicked = false;
 
-    const width = endX - this.startX;
-    const height = endY - this.startY;
+    const width = Math.abs(endX - this.startX);
+    const height = Math.abs(endY - this.startY);
 
     const left = Math.min(this.startX, endX);
     const top = Math.min(this.startY, endY);
