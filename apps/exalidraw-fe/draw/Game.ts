@@ -61,6 +61,7 @@ export class Game {
   private panY = 0;
   private offsetX = 0;
   private offsetY = 0;
+  private scale = 1;
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
@@ -80,8 +81,8 @@ export class Game {
   getMousePos(e: MouseEvent) {
     const rect = this.canvas.getBoundingClientRect();
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (e.clientX - rect.left) / this.scale - this.offsetX,
+      y: (e.clientY - rect.top) / this.scale - this.offsetY,
     };
   }
 
@@ -90,27 +91,35 @@ export class Game {
     this.canvas.style.cursor = tool == "hand" ? "grab" : "default";
   }
 
+  setScale(newScale: number) {
+    this.scale = newScale;
+    this.clearCanvas();
+    console.log("now =", this.scale);
+  }
+
   drawGrid() {
     const gridSize = 20;
 
-    const w = this.canvas.width;
-    const h = this.canvas.height;
+    const left = -this.offsetX;
+    const top = -this.offsetY;
+    const right = left + this.canvas.width / this.scale;
+    const bottom = top + this.canvas.height / this.scale;
 
-    const sX = this.offsetX % gridSize;
-    const sY = this.offsetY % gridSize;
+    const startX = Math.floor(left / gridSize) * gridSize;
+    const startY = Math.floor(top / gridSize) * gridSize;
 
     this.ctx.beginPath();
     this.ctx.strokeStyle = "#1f1f1f";
-    this.ctx.lineWidth = 1;
+    this.ctx.lineWidth = 1 / this.scale;
 
-    for (let x = sX; x < w; x += gridSize) {
-      this.ctx.moveTo(x, 0);
-      this.ctx.lineTo(x, h);
+    for (let x = startX; x <= right; x += gridSize) {
+      this.ctx.moveTo(x, top);
+      this.ctx.lineTo(x, bottom);
     }
 
-    for (let y = sY; y < h; y += gridSize) {
-      this.ctx.moveTo(0, y);
-      this.ctx.lineTo(w, y);
+    for (let y = startY; y <= bottom; y += gridSize) {
+      this.ctx.moveTo(left, y);
+      this.ctx.lineTo(right, y);
     }
 
     this.ctx.stroke();
@@ -118,9 +127,12 @@ export class Game {
 
   clearCanvas() {
     //changes required
+    this.ctx.resetTransform();
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillStyle = "rgb(0,0,0)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.setTransform(this.scale,0,0,this.scale,this.offsetX * this.scale,this.offsetY * this.scale);
 
     this.drawGrid();
 
@@ -128,17 +140,12 @@ export class Game {
 
     this.existingShapes.forEach((shape) => {
       if (shape.type === "rect") {
-        this.ctx.strokeRect(
-          shape.x + this.offsetX,
-          shape.y + this.offsetY,
-          shape.width,
-          shape.height,
-        );
+        this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
       } else if (shape.type === "ellipse") {
         this.ctx.beginPath();
         this.ctx.ellipse(
-          shape.centerX + this.offsetX,
-          shape.centerY + this.offsetY,
+          shape.centerX,
+          shape.centerY,
           shape.radX,
           shape.radY,
           0,
@@ -153,34 +160,25 @@ export class Game {
         const leftPoint = { x: shape.left, y: shape.centerY };
 
         this.ctx.beginPath();
-        this.ctx.moveTo(topPoint.x + this.offsetX, topPoint.y + this.offsetY);
-        this.ctx.lineTo(
-          rightPoint.x + this.offsetX,
-          rightPoint.y + this.offsetY,
-        );
-        this.ctx.lineTo(
-          bottomPoint.x + this.offsetX,
-          bottomPoint.y + this.offsetY,
-        );
-        this.ctx.lineTo(leftPoint.x + this.offsetX, leftPoint.y + this.offsetY);
+        this.ctx.moveTo(topPoint.x, topPoint.y);
+        this.ctx.lineTo(rightPoint.x, rightPoint.y);
+        this.ctx.lineTo(bottomPoint.x, bottomPoint.y);
+        this.ctx.lineTo(leftPoint.x, leftPoint.y);
         this.ctx.closePath();
         this.ctx.stroke();
       } else if (shape.type == "line") {
         this.ctx.beginPath();
-        this.ctx.moveTo(shape.sX + this.offsetX, shape.sY + this.offsetY);
-        this.ctx.lineTo(shape.eX + this.offsetX, shape.eY + this.offsetY);
+        this.ctx.moveTo(shape.sX, shape.sY);
+        this.ctx.lineTo(shape.eX, shape.eY);
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (shape.type == "pencil") {
         this.ctx.beginPath();
         if (!shape.points || shape.points.length === 0) return;
-        this.ctx.moveTo(
-          shape.points[0].x + this.offsetX,
-          shape.points[0].y + this.offsetY,
-        );
+        this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
 
         for (let p of shape.points) {
-          this.ctx.lineTo(p.x + this.offsetX, p.y + this.offsetY);
+          this.ctx.lineTo(p.x, p.y);
         }
         this.ctx.stroke();
       }
@@ -265,46 +263,41 @@ export class Game {
     if (this.selectedTool === "rect") {
       shape = {
         type: "rect",
-        x: this.startX - this.offsetX,
-        y: this.startY - this.offsetY,
+        x: left,
+        y: top,
         width,
         height,
       };
     } else if (this.selectedTool === "ellipse") {
       shape = {
         type: "ellipse",
-        centerX: centerX - this.offsetX,
-        centerY: centerY - this.offsetY,
+        centerX: centerX,
+        centerY: centerY,
         radX,
         radY,
       };
     } else if (this.selectedTool === "diamond") {
       shape = {
         type: "diamond",
-        centerX: centerX - this.offsetX,
-        centerY: centerY - this.offsetY,
-        top: top - this.offsetY,
-        left: left - this.offsetX,
+        centerX: centerX,
+        centerY: centerY,
+        top: top,
+        left: left,
         width,
         height,
       };
     } else if (this.selectedTool === "line") {
       shape = {
         type: "line",
-        sX: this.startX - this.offsetX,
-        sY: this.startY - this.offsetY,
-        eX: endX - this.offsetX,
-        eY: endY - this.offsetY,
+        sX: this.startX,
+        sY: this.startY,
+        eX: endX,
+        eY: endY,
       };
     } else if (this.selectedTool === "pencil") {
-      const worldPoints = this.points.map((p) => ({
-        x: p.x - this.offsetX,
-        y: p.y - this.offsetY,
-      }));
-
       shape = {
         type: "pencil",
-        points: worldPoints,
+        points: this.points,
       };
     }
 
@@ -330,8 +323,8 @@ export class Game {
       const dx = e.clientX - this.panX;
       const dy = e.clientY - this.panY;
 
-      this.offsetX += dx;
-      this.offsetY += dy;
+      this.offsetX += dx / this.scale;
+      this.offsetY += dy / this.scale;
 
       this.panX = e.clientX;
       this.panY = e.clientY;

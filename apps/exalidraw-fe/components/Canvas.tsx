@@ -13,10 +13,12 @@ export function Canvas({roomId,socket}:{roomId:string,socket:WebSocket}){
     const canvasref= useRef<HTMLCanvasElement>(null);
     const [game,setGame] = useState<Game>();
     const [selectedTool,setSelectedTool] = useState<Tool>('pencil');
+    const [scale,setScale] = useState<number>(1);
 
     useEffect(()=>{
       game?.setSelectedTool(selectedTool);
-    },[selectedTool,game]);
+      game?.setScale(scale);
+    },[selectedTool,game,scale]);
 
     useEffect(()=>{
         if(canvasref.current){
@@ -38,13 +40,23 @@ export function Canvas({roomId,socket}:{roomId:string,socket:WebSocket}){
       return ()=>window.removeEventListener('resize',handleresize);
     },[]);
 
+    const onZoomIn = () => {
+      if(scale>=1.5)return;
+      setScale(prev => Number((prev + 0.1).toFixed(1)));
+    }
+
+    const onZoomOut = () => {
+      if(scale<=0.5)return;
+      setScale(prev => Number((prev - 0.1).toFixed(1)));
+    }
+
     return <div style={{
         height: '100vh',
          background: 'transparent',
         overflow: 'hidden'
     }}>
         <canvas ref={canvasref} width={window.innerWidth} height={window.innerHeight}></canvas>
-        <Topbar setSelectedTool={setSelectedTool} selectedTool={selectedTool}  />
+        <Topbar setSelectedTool={setSelectedTool} selectedTool={selectedTool} onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
     </div>
 }
 
