@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, LogOut, Users, Calendar, Divide, DoorOpen } from "lucide-react";
-import Link from "next/link";
 import { httpapiClient } from "../../lib/apiClient";
 import { useRouter } from "next/navigation";
 
@@ -56,6 +55,13 @@ export default function Dashboard() {
     router.push("/");
     console.log(res.data.message);
   };
+
+  const joinRoom = () => {
+    //@ts-ignore
+    const link = document.querySelector('#room-code')?.value;
+    const roomId  = link.split('/')[3];
+    router.push(`/canvas/${roomId}`);
+  }
 
   return (
     <div className="min-h-screen bg-orange-50">
@@ -226,7 +232,7 @@ export default function Dashboard() {
                   Join Room
                 </h2>
                 <p className="mt-1 text-sm  text-gray-600">
-                  Enter the room code to join a whiteboard.
+                  Enter the link to join a whiteboard.
                 </p>
                 <form
                   onSubmit={(e) => {
@@ -234,6 +240,7 @@ export default function Dashboard() {
                     if (joinCode.trim()) {
                       setJoinCode("");
                       setShowJoin(false);
+                      joinRoom();
                     }
                   }}
                   className="mt-6 space-y-4"
@@ -243,7 +250,7 @@ export default function Dashboard() {
                       htmlFor="room-code"
                       className="block text-sm font-medium text-foreground"
                     >
-                      Room Code
+                      Paste the link
                     </label>
                     <input
                       id="room-code"
@@ -252,7 +259,6 @@ export default function Dashboard() {
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value)}
                       placeholder="e.g. ABC-1234"
-                      // className="flex h-10 w-full rounded-md px-3 py-2 text-base placeholder:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2 md:text-sm"
                       className="h-10 w-full rounded-md border border-[hsl(40_15%_88%)]
                            bg-[hsl(40_33%_98%)] px-3 text-sm
                            placeholder:text-[hsl(220_10%_46%)]

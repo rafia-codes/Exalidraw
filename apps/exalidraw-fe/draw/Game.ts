@@ -8,6 +8,7 @@ type Points = {
 
 type Shape =
   | {
+      id: string;
       type: "rect";
       x: number;
       y: number;
@@ -15,6 +16,7 @@ type Shape =
       height: number;
     }
   | {
+      id: string;
       type: "ellipse";
       radX: number;
       radY: number;
@@ -22,6 +24,7 @@ type Shape =
       centerY: number;
     }
   | {
+      id: string;
       type: "diamond";
       centerX: number;
       centerY: number;
@@ -31,6 +34,7 @@ type Shape =
       left: number;
     }
   | {
+      id: string;
       type: "line";
       sX: number;
       sY: number;
@@ -38,10 +42,12 @@ type Shape =
       eY: number;
     }
   | {
+      id: string;
       type: "pencil";
       points: Array<Points>;
     }
   | {
+      id: string;
       type: "hand";
     };
 
@@ -51,6 +57,7 @@ export class Game {
   private roomId: string;
   private socket: WebSocket;
   private existingShapes: Shape[];
+  private undoShapes: Shape[];
   private startX = 0;
   private startY = 0;
   private clicked: boolean;
@@ -70,6 +77,7 @@ export class Game {
     this.ctx.lineJoin = "round";
     this.roomId = roomId;
     this.existingShapes = [];
+    this.undoShapes = [];
     this.socket = socket;
     this.clicked = false;
     this.init();
@@ -186,17 +194,35 @@ export class Game {
   }
 
   async init() {
-    this.existingShapes = await getExistingShapes(this.roomId);
+    const shapes = await getExistingShapes(this.roomId);
+    this.existingShapes = shapes ?? [];
     this.clearCanvas();
   }
+
+  // initHandlers() {
+  //   this.socket.onmessage = (e) => {
+  //     const message = JSON.parse(e.data);
+
+  //     if (message.type === "chat") {
+  //       const parsedShape = JSON.parse(message.message);
+  //       this.existingShapes.push(parsedShape.shape);
+  //       this.clearCanvas();
+  //       this.undoShapes = [];
+  //     }
+
+  //     if (message.type === "updateShapes" || message.type === "updated") {
+  //       this.existingShapes = message.shapes;
+  //       this.clearCanvas();
+  //     }
+  //   };
+  // }
 
   initHandlers() {
     this.socket.onmessage = (e) => {
       const message = JSON.parse(e.data);
 
-      if (message.type === "chat") {
-        const parsedShape = JSON.parse(message.message);
-        this.existingShapes.push(parsedShape.shape);
+      if (message.type === "updated") {
+        this.existingShapes = message.shapes;
         this.clearCanvas();
       }
     };
@@ -212,6 +238,46 @@ export class Game {
     this.canvas.removeEventListener("mousedown", this.mouseDownHandler);
     this.canvas.removeEventListener("mouseup", this.mouseUpHandler);
     this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
+  }
+
+  undo() {
+    if (this.existingShapes.length === 0) return;
+
+    const shape = this.existingShapes.pop();
+    if (!shape) return;
+
+    this.undoShapes.push(shape);
+
+    this.clearCanvas();
+
+    this.socket.send(
+      JSON.stringify({
+        type: "updated",
+        roomId: this.roomId,
+        shapes: this.existingShapes,
+        action: 'undo'
+      }),
+    );
+  }
+
+  redo() {
+    if (this.undoShapes.length === 0) return;
+
+    const shape = this.undoShapes.pop();
+    if (!shape) return;
+
+    this.existingShapes.push(shape);
+
+    this.clearCanvas();
+
+    this.socket.send(
+      JSON.stringify({
+        type: "updated",
+        roomId: this.roomId,
+        shapes: this.existingShapes,
+        action: 'redo'
+      }),
+    );
   }
 
   mouseDownHandler = (e: MouseEvent) => {
@@ -262,59 +328,72 @@ export class Game {
 
     if (this.selectedTool === "rect") {
       shape = {
+        id: crypto.randomUUID(),
         type: "rect",
         x: left,
         y: top,
         width,
-        height,
+        height
       };
     } else if (this.selectedTool === "ellipse") {
       shape = {
+        id: crypto.randomUUID(),
         type: "ellipse",
         centerX: centerX,
         centerY: centerY,
         radX,
-        radY,
+        radY
       };
     } else if (this.selectedTool === "diamond") {
       shape = {
+        id: crypto.randomUUID(),
         type: "diamond",
         centerX: centerX,
         centerY: centerY,
         top: top,
         left: left,
         width,
-        height,
+        height
       };
     } else if (this.selectedTool === "line") {
       shape = {
+        id: crypto.randomUUID(),
         type: "line",
         sX: this.startX,
         sY: this.startY,
         eX: endX,
-        eY: endY,
+        eY: endY
       };
     } else if (this.selectedTool === "pencil") {
       shape = {
+        id: crypto.randomUUID(),
         type: "pencil",
-        points: this.points,
+        points: this.points
       };
     }
 
     if (!shape) return;
 
     this.existingShapes.push(shape);
+    this.undoShapes = [];
 
+    // this.socket.send(
+    //   JSON.stringify({
+    //     type: "chat",
+    //     message: JSON.stringify({ shape }),
+    //     roomId: this.roomId,
+    //   }),
+    // );
     this.socket.send(
       JSON.stringify({
-        type: "chat",
-        message: JSON.stringify({ shape }),
+        type: "updated",
         roomId: this.roomId,
+        shapes: this.existingShapes,
+        action: 'push'
       }),
     );
 
     this.points = [];
-
     this.clearCanvas();
   };
 

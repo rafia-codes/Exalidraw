@@ -141,9 +141,6 @@ app.get("/chats/:roomId", async (req, res) => {//to get messages
   const messages = await prismaClient.chat.findMany({
     where:{
       roomId
-    },
-    orderBy:{
-      id:"desc"
     }
   });
   const shapes = messages.map((message:any)=>{

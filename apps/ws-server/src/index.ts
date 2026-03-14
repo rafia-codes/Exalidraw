@@ -65,6 +65,10 @@ wss.on("connection", function connection(ws, request) {
     userId: user,
   });
 
+  ws.on("close",() => {
+    users = users.filter((u) => u.ws !== ws);
+  })
+
   ws.on("message", async function message(data) {
     let parsedData;
     if (typeof data !== "string") {
@@ -76,7 +80,8 @@ wss.on("connection", function connection(ws, request) {
 
     if (parsedData.type === "join_room") {
       const user = users.find((x) => x.ws == ws);
-      if (!user?.rooms.includes(parsedData.roomId)) {
+      if(!user)return;
+      if (!user.rooms.includes(parsedData.roomId)) {
         user?.rooms.push(parsedData.roomId);
       }
     }
@@ -84,7 +89,34 @@ wss.on("connection", function connection(ws, request) {
     if (parsedData.type === "leave_room") {
       const user = users.find((x) => x.ws == ws);
       if (!user) return;
-      user.rooms = user?.rooms.filter((x) => x !== parsedData.roomId);
+      user.rooms = user.rooms.filter((room) => room !== parsedData.roomId);
+    }
+
+    if(parsedData.type === 'updated'){
+      const roomId = parsedData.roomId;
+      const shapes = parsedData.shapes;
+
+      const shape = JSON.stringify(shapes[shapes.length-1]);
+
+      if(parsedData.action == 'push' && shapes.length > 0){
+        await prismaClient.chat.create({
+        data: {
+          roomId: Number(roomId),
+          message: shape,
+          userId: user,
+        },
+      });
+      }
+
+      users.forEach((user:User) => {
+        if(user.ws !== ws && user?.rooms.includes(roomId)){
+          user.ws.send(JSON.stringify({
+            type:'updated',
+            roomId,
+            shapes
+          }))
+        }
+      })
     }
 
     if (parsedData.type === "chat") {
