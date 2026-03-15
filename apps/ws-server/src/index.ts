@@ -43,31 +43,35 @@ wss.on("listening", () => {
 });
 
 wss.on("connection", function connection(ws, request) {
-  // const url = request.url;
-  // if (!url) return;
-  // const queryParams = new URLSearchParams(url.split("?")[1]);
-  // const token = queryParams.get("token") || "";
+  let userId: string | null = null;
+
   const token = gettokenfromCookie(request.headers.cookie);
-  if (token == null) {
+  if (token) {
+    //@ts-ignore
+    const verified = checkUser(token);
+    if (!verified) {
+      ws.close();
+      return;
+    }
+    userId = verified;
+  } else {
+    userId = "guest-" + crypto.randomUUID();
+  }
+
+  if (userId == null) {
     ws.close();
     return;
   }
 
-  const user = checkUser(token);
-
-  if (user == null) {
-    ws.close();
-    return;
-  }
   users.push({
     ws: ws,
     rooms: [],
-    userId: user,
+    userId: userId,
   });
 
-  ws.on("close",() => {
+  ws.on("close", () => {
     users = users.filter((u) => u.ws !== ws);
-  })
+  });
 
   ws.on("message", async function message(data) {
     let parsedData;
@@ -80,7 +84,7 @@ wss.on("connection", function connection(ws, request) {
 
     if (parsedData.type === "join_room") {
       const user = users.find((x) => x.ws == ws);
-      if(!user)return;
+      if (!user) return;
       if (!user.rooms.includes(parsedData.roomId)) {
         user?.rooms.push(parsedData.roomId);
       }
@@ -92,57 +96,60 @@ wss.on("connection", function connection(ws, request) {
       user.rooms = user.rooms.filter((room) => room !== parsedData.roomId);
     }
 
-    if(parsedData.type === 'updated'){
+    if (parsedData.type === "updated") {
       const roomId = parsedData.roomId;
       const shapes = parsedData.shapes;
 
-      const shape = JSON.stringify(shapes[shapes.length-1]);
+      const shape = JSON.stringify(shapes[shapes.length - 1]);
+      console.log(roomId);
 
-      if(parsedData.action == 'push' && shapes.length > 0){
+      if (parsedData.action == "push" && shapes.length > 0 && !roomId.startsWith("guest-")) {
         await prismaClient.chat.create({
-        data: {
-          roomId: Number(roomId),
-          message: shape,
-          userId: user,
-        },
-      });
+          data: {
+            roomId: Number(roomId),
+            message: shape,
+            userId: userId,
+          },
+        });
       }
 
-      users.forEach((user:User) => {
-        if(user.ws !== ws && user?.rooms.includes(roomId)){
-          user.ws.send(JSON.stringify({
-            type:'updated',
-            roomId,
-            shapes
-          }))
-        }
-      })
-    }
-
-    if (parsedData.type === "chat") {
-      const room = parsedData.roomId;
-      const message = parsedData.message;
-
-      await prismaClient.chat.create({
-        data: {
-          roomId: Number(room),
-          message,
-          userId: user,
-        },
-      });
-
-      users.forEach((user) => {
-        if (user.rooms.includes(room)) {
-          console.log(user.userId, " ", user.rooms);
+      users.forEach((user: User) => {
+        if (user.ws !== ws && user?.rooms.includes(roomId)) {
           user.ws.send(
             JSON.stringify({
-              type: "chat",
-              message: message,
-              room,
+              type: "updated",
+              roomId,
+              shapes,
             }),
           );
         }
       });
     }
+
+    // if (parsedData.type === "chat") {
+    //   const room = parsedData.roomId;
+    //   const message = parsedData.message;
+
+    //   await prismaClient.chat.create({
+    //     data: {
+    //       roomId: Number(room),
+    //       message,
+    //       userId: user,
+    //     },
+    //   });
+
+    //   users.forEach((user) => {
+    //     if (user.rooms.includes(room)) {
+    //       console.log(user.userId, " ", user.rooms);
+    //       user.ws.send(
+    //         JSON.stringify({
+    //           type: "chat",
+    //           message: message,
+    //           room,
+    //         }),
+    //       );
+    //     }
+    //   });
+    // }
   });
 });

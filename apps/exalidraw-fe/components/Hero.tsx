@@ -1,13 +1,28 @@
 'use client'
+
 import { Button } from "@/components/Button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "../public/hero.png";
 import { useState } from "react";
 import AuthModal from "./AuthModal";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const Hero = () => {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authOpen, setAuthOpen] = useState(false);
+
+  const router = useRouter();
+  const [guestId, setGuestId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let id = localStorage.getItem("guestId");
+    if(!id){
+      id = "guest-" + crypto.randomUUID();
+      localStorage.setItem("guestId", id);
+    }
+    setGuestId(id);
+  }, []);
 
   return (
     <>
@@ -35,7 +50,7 @@ const Hero = () => {
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+            <a href="#" onClick={()=>alert('Premium features not been added yet.Stay tuned')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
             <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Docs</a>
           </div>
           <div className="flex items-center gap-3">
@@ -64,7 +79,8 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
-            <Button variant="hero" size="lg" className="text-base px-8 py-6 rounded-xl bg-orange-600/90 text-white">
+            <Button onClick={()=>router.push(`/canvas/${guestId}`)}
+            variant="hero" size="lg" className="text-base px-8 py-6 rounded-xl bg-orange-600/90 text-white">
               Start Drawing — It's Free
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>

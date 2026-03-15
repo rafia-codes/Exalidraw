@@ -97,7 +97,10 @@ export function Canvas({
       roomId
     }));
     socket.close();//imp
-    router.push("/dashboard");
+    if(roomId.startsWith('guest'))
+      router.push('/');
+    else
+      router.push("/dashboard");
   }
 
   return (

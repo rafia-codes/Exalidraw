@@ -24,7 +24,7 @@ const features = [
   {
     icon: Share2,
     title: "Easy Sharing",
-    description: "Share a link and collaborate. No sign-up required for viewers.",
+    description: "Share a link and collaborate. Be creative.",
   },
   {
     icon: Lock,
