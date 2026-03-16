@@ -55,7 +55,9 @@ app.post("/signup", async (req, res) => {
     const token = jwt.sign({ id: user?.id }, JWT_SECRET);
     res.cookie('token',token,{
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      httpOnly: true
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
     });
     console.log('yha cookie',res.cookie);
     return res.json({message: 'Registered successfully'});
@@ -80,7 +82,9 @@ app.post("/signin", async (req, res) => {
     const token = jwt.sign({ id: user?.id }, JWT_SECRET);
     res.cookie('token',token,{
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      httpOnly: true
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
     });
     return res.json({message: 'Logged-In successfully'});
   } catch (error) {
