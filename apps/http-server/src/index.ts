@@ -12,6 +12,7 @@ import { prismaClient } from "@repo/db/client";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import cookieParser from 'cookie-parser';
+import 'dotenv/config';
 
 declare global {
   namespace Express {
@@ -25,7 +26,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.FRONTEND,
   credentials: true
 }));
 app.use(cookieParser());
