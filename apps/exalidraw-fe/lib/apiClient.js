@@ -10,6 +10,3 @@ export const wsapiClient = axios.create({
     baseURL: `${WS_URL}`,
     withCredentials: true
 })
-
-console.log(`${HTTP_BACKEND}`);
-console.log(`${WS_URL}`);
