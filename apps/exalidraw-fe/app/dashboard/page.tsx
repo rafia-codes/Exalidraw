@@ -25,14 +25,16 @@ export default function Dashboard() {
   const router = useRouter();
 
   const getRooms = async () => {
+    console.log(28,'before');
     const res = await httpapiClient.get("/room");
-    console.log(28, res);
+    console.log(30, res);
     if (res.data.rooms?.length > 0) setRooms(res.data.rooms);
     console.log(31, rooms);
     setLoading(false);
   };
 
   useEffect(() => {
+    console.log('useEffect k andar');
     getRooms();
   }, []);
 
