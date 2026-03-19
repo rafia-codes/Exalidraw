@@ -7,6 +7,8 @@ export function verifyUser(req: Request, res: Response, next: NextFunction) {
   try {
     const token = req.cookies["token"];
     console.log(req.cookies);
+    if(!token)
+      return res.status(400).json({message:"Token missing"});
     const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
     if (payload) {
       (req as any).userId = payload.id;
