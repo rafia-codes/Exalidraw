@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { JwtPayload } from "jsonwebtoken";
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from "@repo/backend-common/config";
 
 export function verifyUser(req: Request, res: Response, next: NextFunction) {
