@@ -11,8 +11,8 @@ import {
 import { prismaClient } from "@repo/db/client";
 import jwt from "jsonwebtoken";
 import cors from "cors";
-import cookieParser from 'cookie-parser';
-import 'dotenv/config';
+import cookieParser from "cookie-parser";
+import "dotenv/config";
 
 declare global {
   namespace Express {
@@ -23,12 +23,14 @@ declare global {
 }
 
 const app = express();
-
+app.set('trust proxy', 1);
 app.use(express.json());
-app.use(cors({
-  origin: process.env.FRONTEND,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND,
+    credentials: true,
+  }),
+);
 app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
@@ -53,14 +55,14 @@ app.post("/signup", async (req, res) => {
       },
     });
     const token = jwt.sign({ id: user?.id }, JWT_SECRET);
-    res.cookie('token',token,{
+    res.cookie("token", token, {
       maxAge: 3 * 24 * 60 * 60 * 1000,
       httpOnly: true,
       secure: true,
-      sameSite: 'none'
+      sameSite: "none",
     });
-    console.log('yha cookie',res.cookie);
-    return res.json({message: 'Registered successfully'});
+    console.log("yha cookie", res.cookie);
+    return res.json({ message: "Registered successfully" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -76,55 +78,64 @@ app.post("/signin", async (req, res) => {
     const user = await prismaClient.user.findUnique({
       where: { email },
     });
-    if (!user) return res.status(404).json({ message: "User not found. Please signup first." });
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "User not found. Please signup first." });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(404).json({ message: "Wrong Credentials" });
     const token = jwt.sign({ id: user?.id }, JWT_SECRET);
-    res.cookie('token',token,{
+    res.cookie("token", token, {
       maxAge: 3 * 24 * 60 * 60 * 1000,
       httpOnly: true,
       secure: true,
-      sameSite: 'none'
+      sameSite: "none",
     });
-    return res.json({message: 'Logged-In successfully'});
+    return res.json({ message: "Logged-In successfully" });
   } catch (error) {
     return res.json({ message: "Internal Server Error" });
   }
 });
 
-app.post('/logout', async (req,res) => {
+app.post("/logout", async (req, res) => {
   try {
-    res.clearCookie('token');
-    return res.json({message:'Logged Out successfully.'})
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+    return res.json({ message: "Logged Out successfully." });
   } catch (error) {
     return res.status(500).json({ message: "bug in /logout endpt" });
   }
-})
+});
 
-app.get('/room',verifyUser, async (req,res) => {//to get the rooms
-  console.log('getting rooms');
+app.get("/room", verifyUser, async (req, res) => {
+  //to get the rooms
+  console.log("getting rooms");
   try {
-    console.log('101');
+    console.log("101");
     const userId = req.userId;
     const rooms = await prismaClient.room.findMany({
-      where:{
-        adminId:userId
-      }
+      where: {
+        adminId: userId,
+      },
     });
     console.log(rooms);
-    console.log('108');
-    return res.json({rooms});
+    console.log("108");
+    return res.json({ rooms });
   } catch (error) {
     return res.status(500).json({ message: "bug in /room get endpt" });
   }
 });
 
-app.post("/room", verifyUser, async (req, res) => {//to create a room
-   try {
-  console.log('room hit');
-  const parsedData = RoomSchema.safeParse(req.body);
-  if (!parsedData.success)
-    return res.status(400).json({ message: "Incorrect credentials" });
+app.post("/room", verifyUser, async (req, res) => {
+  //to create a room
+  try {
+    console.log("room hit");
+    const parsedData = RoomSchema.safeParse(req.body);
+    if (!parsedData.success)
+      return res.status(400).json({ message: "Incorrect credentials" });
     const userId = req.userId;
     console.log(userId);
     const room = await prismaClient.room.create({
@@ -133,34 +144,36 @@ app.post("/room", verifyUser, async (req, res) => {//to create a room
         admin: { connect: { id: userId } },
       },
     });
-    console.log('created');
-    return res.json({room,message:'Room created Successfully.'});
+    console.log("created");
+    return res.json({ room, message: "Room created Successfully." });
   } catch (error) {
     return res.status(500).json({ message: "bug in /room post endpt" });
   }
 });
 
-app.get("/chats/:roomId", async (req, res) => {//to get messages
-  console.log('getting chats');
+app.get("/chats/:roomId", async (req, res) => {
+  //to get messages
+  console.log("getting chats");
   const roomId = Number(req.params.roomId);
   const messages = await prismaClient.chat.findMany({
-    where:{
-      roomId
-    }
+    where: {
+      roomId,
+    },
   });
-  const shapes = messages.map((message:any)=>{
-    return (JSON.parse(message.message)).shape;
-  })
+  const shapes = messages.map((message: any) => {
+    return JSON.parse(message.message).shape;
+  });
   console.log(shapes);
   return res.json({ shapes });
 });
 
-app.get("/room/:slug", async (req, res) => { //returning roomId
+app.get("/room/:slug", async (req, res) => {
+  //returning roomId
   const slug = req.params.slug;
   const room = await prismaClient.room.findFirst({
     where: {
-      slug
-    }
+      slug,
+    },
   });
   return res.json({ room });
 });
