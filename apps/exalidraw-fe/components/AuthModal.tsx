@@ -1,3 +1,4 @@
+'use client'
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { httpapiClient } from '../lib/apiClient';
@@ -56,6 +57,8 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
 
       if (res.status == 200) {
         setMessage({ type: "success", text: res.data.message || "Success!" });
+        console.log(res);
+        localStorage.setItem('token',res.data.token);
         if(mode == 'signin')
           setTimeout(()=>router.push('/dashboard'),1500);
         else

@@ -55,14 +55,14 @@ app.post("/signup", async (req, res) => {
       },
     });
     const token = jwt.sign({ id: user?.id }, JWT_SECRET);
-    res.cookie("token", token, {
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
+    // res.cookie("token", token, {
+    //   maxAge: 3 * 24 * 60 * 60 * 1000,
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "none",
+    // });
     console.log("yha cookie", res.cookie);
-    return res.json({ message: "Registered successfully" });
+    return res.json({ message: "Registered successfully",token });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
@@ -85,13 +85,13 @@ app.post("/signin", async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(404).json({ message: "Wrong Credentials" });
     const token = jwt.sign({ id: user?.id }, JWT_SECRET);
-    res.cookie("token", token, {
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
-    return res.json({ message: "Logged-In successfully" });
+    // res.cookie("token", token, {
+    //   maxAge: 3 * 24 * 60 * 60 * 1000,
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "none",
+    // });
+    return res.json({ message: "Logged-In successfully",token });
   } catch (error) {
     return res.json({ message: "Internal Server Error" });
   }

@@ -13,17 +13,17 @@ interface User {
 
 let users: User[] = [];
 
-function gettokenfromCookie(cookie?: string) {
-  if (!cookie) return null;
+// function gettokenfromCookie(cookie?: string) {
+//   if (!cookie) return null;
 
-  let cookies = cookie.split(";");
+//   let cookies = cookie.split(";");
 
-  for (let cooki of cookies) {
-    let [key, value] = cooki.trim().split("=");
-    if (key === "token") return value;
-  }
-  return null;
-}
+//   for (let cooki of cookies) {
+//     let [key, value] = cooki.trim().split("=");
+//     if (key === "token") return value;
+//   }
+//   return null;
+// }
 
 function checkUser(token: string): string | null {
   try {
@@ -39,34 +39,18 @@ function checkUser(token: string): string | null {
 }
 
 wss.on("listening", () => {
-  console.log("WebSocket server running on ws://localhost:8080");
+  console.log("WebSocket server running");
 });
 
 wss.on("connection", function connection(ws, request) {
   let userId: string | null = null;
 
-  const token = gettokenfromCookie(request.headers.cookie);
-  if (token) {
-    //@ts-ignore
-    const verified = checkUser(token);
-    if (!verified) {
-      ws.close();
-      return;
-    }
-    userId = verified;
-  } else {
-    userId = "guest-" + crypto.randomUUID();
-  }
-
-  if (userId == null) {
-    ws.close();
-    return;
-  }
+  userId = "guest-" + crypto.randomUUID();
 
   users.push({
-    ws: ws,
-    rooms: [],
-    userId: userId,
+          ws: ws,
+          rooms: [],
+          userId: userId,
   });
 
   ws.on("close", () => {
@@ -80,6 +64,25 @@ wss.on("connection", function connection(ws, request) {
     } else {
       parsedData = JSON.parse(data);
       console.log(typeof parsedData);
+    }
+
+    if (parsedData.type === "auth" && parsedData.token) {
+      try {
+        const verified = checkUser(parsedData.token);
+        if (!verified) {
+          ws.close();
+          return;
+        }
+        userId = verified;
+
+        const idx = users.findIndex(u => u.ws === ws);
+        if(idx !== -1 && users[idx]) users[idx].userId = userId;
+      } catch (error) {
+        ws.send(
+          JSON.stringify({ type: "auth_error", message: "Invalid token" }),
+        );
+        ws.close();
+      } 
     }
 
     if (parsedData.type === "join_room") {
@@ -103,7 +106,11 @@ wss.on("connection", function connection(ws, request) {
       const shape = JSON.stringify(shapes[shapes.length - 1]);
       console.log(roomId);
 
-      if (parsedData.action == "push" && shapes.length > 0 && !roomId.startsWith("guest-")) {
+      if (
+        parsedData.action == "push" &&
+        shapes.length > 0 &&
+        !roomId.startsWith("guest-")
+      ) {
         await prismaClient.chat.create({
           data: {
             roomId: Number(roomId),

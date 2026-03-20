@@ -147,6 +147,7 @@ export class Game {
     this.ctx.strokeStyle = "white";
 
     this.existingShapes.forEach((shape) => {
+      if(!shape)return;
       if (shape.type === "rect") {
         this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
       } else if (shape.type === "ellipse") {

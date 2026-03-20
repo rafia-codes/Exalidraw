@@ -8,8 +8,13 @@ export function RoomCanvas({roomId}:{roomId:string}){
 
     useEffect(()=>{
         const ws = new WebSocket(WS_URL as string);
+        const token = localStorage.getItem('token');
         ws.onopen = () => {
             setSocket(ws);
+            ws.send(JSON.stringify({
+                type:"auth",
+                token
+            }));
             ws.send(JSON.stringify({
             type:"join_room",
             roomId
