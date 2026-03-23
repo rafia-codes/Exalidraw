@@ -63,7 +63,7 @@ wss.on("connection", function connection(ws, request) {
       parsedData = JSON.parse(data.toString());
     } else {
       parsedData = JSON.parse(data);
-      console.log(typeof parsedData);
+      console.log("66",typeof parsedData);
     }
 
     if (parsedData.type === "auth" && parsedData.token) {
@@ -74,7 +74,7 @@ wss.on("connection", function connection(ws, request) {
           return;
         }
         userId = verified;
-
+        console.log(userId);
         const idx = users.findIndex(u => u.ws === ws);
         if(idx !== -1 && users[idx]) users[idx].userId = userId;
       } catch (error) {
@@ -102,9 +102,9 @@ wss.on("connection", function connection(ws, request) {
     if (parsedData.type === "updated") {
       const roomId = parsedData.roomId;
       const shapes = parsedData.shapes;
-
+      console.log('inside updated');
       const shape = JSON.stringify(shapes[shapes.length - 1]);
-      console.log(roomId);
+      console.log(shape);
 
       if (
         parsedData.action == "push" &&

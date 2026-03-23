@@ -6,7 +6,7 @@ import { JWT_SECRET } from "@repo/backend-common/config";
 export function verifyUser(req: Request, res: Response, next: NextFunction) {
   try {
     const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
-    console.log(req.cookies);
+    console.log(req.cookies,"here in middleware now");
     if(!token)
       return res.status(400).json({message:"Token missing"});
     const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
@@ -17,6 +17,6 @@ export function verifyUser(req: Request, res: Response, next: NextFunction) {
       res.status(403).json({ message: "Unauthorized" });
     }
   } catch (error: any) {
-    console.log(error.message);
+    console.log("in catch in middleware",error.message);
   }
 }

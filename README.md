@@ -1,135 +1,174 @@
-# Turborepo starter
+# 🎨 SketchFlow
 
-This Turborepo starter is maintained by the Turborepo core team.
+SketchFlow is a modern **collaborative whiteboard web application** that enables users to draw, interact, and share ideas in real time on an infinite canvas.
 
-## Using this example
+Designed with performance and scalability in mind, it combines a smooth drawing experience with a structured full-stack architecture.
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
-```
+## 🚀 Live Demo
 
-## What's inside?
+👉 [*(Test here)*](https://sketchflowdev.netlify.app/)
 
-This Turborepo includes the following packages/apps:
+> ⚠️ Note: Backend is hosted on a free tier, so the first request may take a few seconds due to cold start.
+> ✅ No signup/login required — you can try the app instantly.
 
-### Apps and Packages
+---
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## ✨ Features
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### 🖌️ Drawing & Canvas
 
-### Utilities
+* Freehand drawing for smooth sketching
+* Shape tools:
 
-This Turborepo has some additional tools already setup for you:
+  * Rectangle
+  * Circle
+  * Line
+  * Diamond
+* Infinite canvas with **panning and zooming support**
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+### 🧠 Editing
 
-### Build
+* Undo / Redo functionality
 
-To build all apps and packages, run the following command:
+### 🤝 Collaboration
 
-```
-cd my-turborepo
+* Share and invite users *(real-time capabilities via WebSockets)*
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+### 📱 Responsive UI
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+* Optimized for desktop and tablet experiences
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+---
+## ⚡ Quick Access
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+No authentication required — simply open the app and start drawing immediately.
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+---
 
-### Develop
+## 🛠️ Tech Stack
 
-To develop all apps and packages, run the following command:
+### Frontend
 
-```
-cd my-turborepo
+* **Next.js (TypeScript)**
+* **Canvas API** for rendering and interactions
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+### Backend
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+* **Node.js (TypeScript)**
+* **WebSocket (ws)** for real-time communication
+* **HTTP server (REST APIs)**
+* Authentication & security:
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+  * JWT
+  * bcrypt
+  * CORS
+
+### Architecture
+
+* **Turborepo** for monorepo management
+
+---
+
+## 📂 Project Structure
 
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+apps/
+├── sketchflow-fe     # Frontend (Next.js)
+├── http-server       # REST API server
+└── ws-server         # WebSocket server
 ```
 
-### Remote Caching
+---
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## ⚙️ Getting Started
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+### 1. Clone the repository
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+git clone https://github.com/rafia-codes/SketchFlow.git
+cd SketchFlow
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### 2. Install dependencies
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+```bash
+npm install
 ```
 
-## Useful Links
+### 3. Run the project
 
-Learn more about the power of Turborepo:
+#### ▶️ Frontend
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+```bash
+cd apps/sketchflow-fe
+npm run dev
+```
+
+Runs on: **http://localhost:3000**
+
+#### ▶️ HTTP Server
+
+```bash
+cd apps/http-server
+npm run dev
+```
+
+Runs on: **http://localhost:3001**
+
+#### ▶️ WebSocket Server
+
+```bash
+cd apps/ws-server
+npm run dev
+```
+
+Runs on: **ws://localhost:8080**
+
+---
+
+## 🧩 Future Improvements
+
+* Advanced real-time collaboration (multi-user cursors, presence)
+* Layers & object selection system
+* New features
+* Performance optimizations for large canvases
+
+---
+
+## 💡 Key Highlights
+
+* Implemented **infinite canvas with pan & zoom mechanics**
+* Designed a **separate WebSocket server** for scalable real-time communication
+* Structured using **monorepo architecture (Turborepo)**
+* Built with **TypeScript across the stack** for maintainability
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 👩‍💻 Author
+
+**Rafia**
+GitHub: https://github.com/rafia-codes
+
+---
+
+## ⭐ Support
+
+If you find this project useful, consider giving it a ⭐ on GitHub!

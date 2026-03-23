@@ -64,7 +64,7 @@ app.post("/signup", async (req, res) => {
     console.log("yha cookie", res.cookie);
     return res.json({ message: "Registered successfully",token });
   } catch (error) {
-    console.log(error);
+    console.log("inside sign up catch",error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -125,6 +125,7 @@ app.get("/room", verifyUser, async (req, res) => {
     console.log("108");
     return res.json({ rooms });
   } catch (error) {
+    console.log("inside room catch",error);
     return res.status(500).json({ message: "bug in /room get endpt" });
   }
 });
@@ -161,7 +162,8 @@ app.get("/chats/:roomId", async (req, res) => {
     },
   });
   const shapes = messages.map((message: any) => {
-    return JSON.parse(message.message).shape;
+    //return JSON.parse(message.message).shape;
+    return JSON.parse(message);
   });
   console.log(shapes);
   return res.json({ shapes });
