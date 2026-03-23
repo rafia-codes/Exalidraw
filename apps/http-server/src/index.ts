@@ -163,7 +163,7 @@ app.get("/chats/:roomId", async (req, res) => {
   });
   const shapes = messages.map((message: any) => {
     //return JSON.parse(message.message).shape;
-    return JSON.parse(message);
+    return JSON.parse(message.message);
   });
   console.log(shapes);
   return res.json({ shapes });

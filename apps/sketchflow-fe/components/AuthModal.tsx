@@ -1,7 +1,8 @@
-'use client'
+"use client";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { httpapiClient } from '../lib/apiClient';
+import { httpapiClient } from "../lib/apiClient";
+import { Eye,EyeOff } from "lucide-react";
 
 interface AuthModalProps {
   mode: "signup" | "signin";
@@ -9,7 +10,11 @@ interface AuthModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) {
+export default function AuthModal({
+  mode,
+  open,
+  onOpenChange,
+}: AuthModalProps) {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -17,8 +22,11 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
   });
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
-
+  const [message, setMessage] = useState<{
+    type: "error" | "success";
+    text: string;
+  } | null>(null);
+  const [viewPassword, setViewPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,7 +42,9 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,10 +57,14 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
     setMessage(null);
 
     try {
-      const url = `${mode === "signup"?"/signup" : "/signin"}`;
+      const url = `${mode === "signup" ? "/signup" : "/signin"}`;
       const payload =
         mode === "signup"
-          ? { username: formData.username, email: formData.email, password: formData.password }
+          ? {
+              username: formData.username,
+              email: formData.email,
+              password: formData.password,
+            }
           : { email: formData.email, password: formData.password };
 
       const res = await httpapiClient.post(url, payload);
@@ -58,16 +72,17 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
       if (res.status == 200) {
         setMessage({ type: "success", text: res.data.message || "Success!" });
         console.log(res);
-        localStorage.setItem('token',res.data.token);
-        if(mode == 'signin')
-          setTimeout(()=>router.push('/dashboard'),1500);
-        else
-          setTimeout(()=>router.push('/dashboard'),1500);
+        localStorage.setItem("token", res.data.token);
+        if (mode == "signin") setTimeout(() => router.push("/dashboard"), 1500);
+        else setTimeout(() => router.push("/dashboard"), 1500);
       }
-    } catch (err:any){
-      if(err.response){
-        setMessage({ type: "error", text: err.response.data.message || "Network error. Try again." });
-      }else{
+    } catch (err: any) {
+      if (err.response) {
+        setMessage({
+          type: "error",
+          text: err.response.data.message || "Network error. Try again.",
+        });
+      } else {
         setMessage({ type: "error", text: "Network error. Try again." });
       }
     } finally {
@@ -78,8 +93,11 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
-      
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-[hsl(220_20%_14%/0.6)] backdrop-blur-sm"
@@ -116,7 +134,6 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          
           {mode === "signup" && (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-[hsl(220_20%_14%)]">
@@ -167,7 +184,7 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
             </label>
             <input
               name="password"
-              type="password"
+              type={viewPassword ? "text" : "password"}
               required
               minLength={6}
               disabled={loading}
@@ -181,6 +198,13 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
                          focus:ring-[hsl(12_80%_58%)]
                          disabled:opacity-50"
             />
+            <button
+              type="button"
+              onClick={() => setViewPassword(!viewPassword)}
+              className="absolute right-10 bottom-26 -translate-y-1/2 text-gray-500 cursor-pointer"
+            >
+              {viewPassword ? <EyeOff className="h-5 w-5"/>:<Eye className="h-5 w-5"/>}
+            </button>
           </div>
 
           <button
@@ -193,7 +217,13 @@ export default function AuthModal({ mode, open, onOpenChange }: AuthModalProps) 
                        hover:-translate-y-0.5 transition-all duration-300
                        disabled:opacity-50 disabled:pointer-events-none"
           >
-            {loading? mode === "signup"? "Creating...": "Signing in...": mode === "signup"? "Sign Up": "Sign In"}
+            {loading
+              ? mode === "signup"
+                ? "Creating..."
+                : "Signing in..."
+              : mode === "signup"
+                ? "Sign Up"
+                : "Sign In"}
           </button>
         </form>
 
