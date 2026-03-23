@@ -1,0 +1,8 @@
+[build]
+  command = "pnpm install && pnpm turbo run build --filter sketchflow-fe"
+  base = "apps/sketchflow-fe"
+  publish = ".next"
+  environment = { NODE_VERSION = "20" }
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
