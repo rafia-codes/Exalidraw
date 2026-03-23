@@ -13,6 +13,8 @@ Designed with performance and scalability in mind, it combines a smooth drawing 
 > ⚠️ Note: Backend is hosted on a free tier, so the first request may take a few seconds due to cold start.
 > ✅ No signup/login required — you can try the app instantly.
 
+![](image.png) ![](image-2.png) 
+      ![](image-1.png)
 ---
 
 ## ✨ Features
